@@ -39,3 +39,29 @@ To configure the Slack Integration, follow the next steps:
 4. Set the following environment variables that Prowler will read:
     - `SLACK_API_TOKEN`: the *Slack App OAuth Token* that was previously get.
     - `SLACK_CHANNEL_NAME`: the name of your Slack Channel where Prowler will send the message.
+
+## Integration with Google Chat
+
+Prowler can also post scan summaries to [Google Chat](https://workspace.google.com/products/chat/) spaces using incoming webhooks and Cards v2 messages:
+
+```sh
+prowler <provider> --google-chat
+```
+
+<Note>
+Google Chat integration requires a `GOOGLE_CHAT_WEBHOOK_URL`. Optional overrides include `GOOGLE_CHAT_SPACE_NAME` (subtitle shown in the card header) and `GOOGLE_CHAT_CARD_HEADER` (title shown in the card header).
+</Note>
+
+### Configuration of the Integration with Google Chat
+
+1. **Create or select a space** in Google Chat where you want to receive Prowler alerts.
+2. **Add an incoming webhook** to the space:
+   - In the space, open *Manage webhooks* and create a new webhook.
+   - Give the webhook a descriptive name (e.g., `Prowler Alerts`) and copy the generated URL (it should start with `https://chat.googleapis.com/`).
+3. **Set the environment variables** that Prowler will read before running the CLI:
+   - `GOOGLE_CHAT_WEBHOOK_URL`: the webhook endpoint copied in the previous step.
+   - `GOOGLE_CHAT_SPACE_NAME` *(optional)*: overrides the subtitle shown in the card header.
+   - `GOOGLE_CHAT_CARD_HEADER` *(optional)*: custom title for the card header.
+4. **Run Prowler with the `--google-chat` flag** using the same provider arguments you use today.
+
+Prowler sends a Cards v2 payload that includes the provider identity, pass/fail counts with severity breakdowns, resources scanned, and the CLI parameters used in the run. The card subtitle points to your instance URL when `AUTH_URL` (or `PROWLER_URL`) is available in the environment, otherwise it falls back to `https://prowler.com`. You can still override the subtitle with `GOOGLE_CHAT_SPACE_NAME` if you prefer a custom label.

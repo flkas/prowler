@@ -1,3 +1,72 @@
+from typing import Any, Tuple
+
+from prowler.config.config import aws_logo, azure_logo, gcp_logo, square_logo_img
+from prowler.lib.logger import logger
+
+
+def get_provider_identity_and_logo(provider: Any) -> Tuple[str, str]:
+    """
+    Build an identity string and logo URL based on the provider metadata.
+
+    Args:
+        provider: The provider object associated with the current run.
+
+    Returns:
+        tuple[str, str]: A tuple with a markdown-friendly identity string and a logo image URL.
+    """
+    identity = ""
+    logo = aws_logo
+    try:
+        if provider.type == "aws":
+            identity = f"AWS Account *{provider.identity.account}*"
+        elif provider.type == "gcp":
+            identity = f"GCP Projects *{', '.join(provider.project_ids)}*"
+            logo = gcp_logo
+        elif provider.type == "azure":
+            printed_subscriptions = []
+            for key, value in provider.identity.subscriptions.items():
+                printed_subscriptions.append(f"- *{key}: {value}*\n")
+            identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
+            logo = azure_logo
+        # TODO: support kubernetes, m365, github, additional providers
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    return identity, logo
+
+
+def build_summary_title(identity: str, stats: dict) -> str:
+    """
+    Compose the common greeting/summary string used in chat integrations.
+
+    Args:
+        identity: Provider identity string (e.g., AWS account or Azure subscriptions).
+        stats: Aggregated statistics produced by extract_findings_statistics.
+
+    Returns:
+        str: Human-friendly title text.
+    """
+    try:
+        return (
+            "Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ "
+            ":cloud::key:\n\n I have just finished the security assessment on your "
+            f"{identity} with a total of *{stats['findings_count']}* findings."
+        )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return ""
+
+
+def get_prowler_avatar() -> str:
+    """
+    Return the default Prowler avatar/logo used across chat integrations.
+    """
+    return square_logo_img
+
+
 def unroll_list(listed_items: list, separator: str = "|") -> str:
     """
     Unrolls a list of items into a single string, separated by a specified separator.

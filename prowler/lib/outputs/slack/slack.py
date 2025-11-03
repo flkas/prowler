@@ -4,12 +4,16 @@ from typing import Any
 from slack_sdk import WebClient
 from slack_sdk.web.base_client import SlackResponse
 
-from prowler.config.config import aws_logo, azure_logo, gcp_logo, square_logo_img
 from prowler.lib.logger import logger
 from prowler.lib.outputs.slack.exceptions.exceptions import (
     SlackChannelNotFound,
     SlackClientError,
     SlackNoCredentialsError,
+)
+from prowler.lib.outputs.utils import (
+    build_summary_title,
+    get_provider_identity_and_logo,
+    get_prowler_avatar,
 )
 from prowler.providers.common.models import Connection
 
@@ -48,7 +52,7 @@ class Slack:
             identity, logo = self.__create_message_identity__(self._provider)
             response = client.chat_postMessage(
                 username="Prowler",
-                icon_url=square_logo_img,
+                icon_url=get_prowler_avatar(),
                 channel=f"#{self.channel}",
                 text="Prowler Scan Summary",
                 blocks=self.__create_message_blocks__(identity, logo, stats, args),
@@ -71,27 +75,8 @@ class Slack:
         - logo (str): The logo URL associated with the provider type.
         """
 
-        # TODO: support kubernetes, m365, github
-        try:
-            identity = ""
-            logo = aws_logo
-            if provider.type == "aws":
-                identity = f"AWS Account *{provider.identity.account}*"
-            elif provider.type == "gcp":
-                identity = f"GCP Projects *{', '.join(provider.project_ids)}*"
-                logo = gcp_logo
-            elif provider.type == "azure":
-                printed_subscriptions = []
-                for key, value in provider.identity.subscriptions.items():
-                    intermediate = f"- *{key}: {value}*\n"
-                    printed_subscriptions.append(intermediate)
-                identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
-                logo = azure_logo
-            return identity, logo
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        identity, logo = get_provider_identity_and_logo(provider)
+        return identity, logo
 
     def __create_message_blocks__(self, identity, logo, stats, args) -> list:
         """
@@ -231,8 +216,7 @@ class Slack:
             str: Slack message title.
         """
         try:
-            title = f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {identity} with a total of *{stats['findings_count']}* findings."
-            return title
+            return build_summary_title(identity, stats)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

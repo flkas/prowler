@@ -95,6 +95,7 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365
 )
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
+from prowler.lib.outputs.google_chat import GoogleChat
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
@@ -407,6 +408,8 @@ def prowler():
     # Extract findings stats
     stats = extract_findings_statistics(finding_outputs)
 
+    prowler_args = " ".join(sys.argv[1:])
+
     if args.slack:
         # TODO: this should be also in a config file
         if "SLACK_API_TOKEN" in environ and (
@@ -418,13 +421,36 @@ def prowler():
                 if "SLACK_CHANNEL_NAME" in environ
                 else environ["SLACK_CHANNEL_ID"]
             )
-            prowler_args = " ".join(sys.argv[1:])
             slack = Slack(token, channel, global_provider)
             _ = slack.send(stats, prowler_args)
         else:
             # Refactor(CLI)
             logger.critical(
                 "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+            )
+            sys.exit(1)
+
+    if args.google_chat:
+        if "GOOGLE_CHAT_WEBHOOK_URL" in environ:
+            webhook_url = environ["GOOGLE_CHAT_WEBHOOK_URL"]
+            space_name = environ.get("GOOGLE_CHAT_SPACE_NAME")
+            card_header = environ.get("GOOGLE_CHAT_CARD_HEADER")
+            try:
+                google_chat = GoogleChat(
+                    webhook_url=webhook_url,
+                    provider=global_provider,
+                    space_name=space_name,
+                    card_header=card_header,
+                )
+                _ = google_chat.send(stats, prowler_args)
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                sys.exit(1)
+        else:
+            logger.critical(
+                "Google Chat integration needs GOOGLE_CHAT_WEBHOOK_URL environment variable (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#google-chat)."
             )
             sys.exit(1)
 

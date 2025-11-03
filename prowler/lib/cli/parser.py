@@ -401,3 +401,8 @@ Detailed documentation at https://docs.prowler.com
             action="store_true",
             help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
         )
+        third_party_subparser.add_argument(
+            "--google-chat",
+            action="store_true",
+            help="Send a summary of the execution to a Google Chat space using incoming webhooks. Environment variable GOOGLE_CHAT_WEBHOOK_URL is required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#google-chat).",
+        )

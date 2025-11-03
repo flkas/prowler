@@ -384,6 +384,11 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.slack
 
+    def test_root_parser_google_chat(self):
+        command = [prowler_command, "--google-chat"]
+        parsed = self.parser.parse(command)
+        assert parsed.google_chat
+
     def test_root_parser_unix_timestamp(self):
         command = [prowler_command, "--unix-timestamp"]
         parsed = self.parser.parse(command)
